@@ -1,0 +1,415 @@
+export default function TirzePOS() {
+  const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+  const [username, setUsername] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [loginError, setLoginError] = React.useState('');
+
+  const ADMIN_USER = 'admin';
+  const ADMIN_PASS = 'pepzii123';
+
+  const handleLogin = () => {
+    if (username === ADMIN_USER && password === ADMIN_PASS) {
+      setIsLoggedIn(true);
+      setLoginError('');
+    } else {
+      setLoginError('Invalid username or password');
+    }
+  };
+
+  if (!isLoggedIn) {
+    return (
+    <div className={darkMode ? 'dark bg-black text-white min-h-screen' : 'bg-gray-100 min-h-screen'}>
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
+        <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-8">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold">PepZii Admin</h1>
+            <p className="text-gray-500 mt-2">
+              Secure POS login access
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <input
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full border rounded-2xl px-4 py-4"
+            />
+
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full border rounded-2xl px-4 py-4"
+            />
+
+            {loginError && (
+              <p className="text-red-500 text-sm">{loginError}</p>
+            )}
+
+            <button
+              onClick={handleLogin}
+              className="w-full bg-black text-white py-4 rounded-2xl text-lg font-semibold hover:opacity-90"
+            >
+              Login
+            </button>
+          </div>
+
+          <div className="mt-6 text-sm text-gray-500 bg-gray-50 rounded-2xl p-4">
+            <p>Demo Login:</p>
+            <p>Username: admin</p>
+            <p>Password: pepzii123</p>
+          </div>
+
+      <div className="max-w-7xl mx-auto mt-6 bg-white rounded-3xl shadow-lg p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold">Online Order Tracker</h2>
+
+          <div className="text-right">
+            <p className="text-sm text-gray-500">QR Payment</p>
+            <img
+              src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=GCash-PepZii"
+              alt="QR Payment"
+              className="rounded-xl border"
+            />
+          </div>
+        </div>
+
+        {orders.length === 0 ? (
+          <p className="text-gray-500">No orders yet.</p>
+        ) : (
+          <div className="space-y-4">
+            {orders.map((order) => (
+              <div
+                key={order.id}
+                className="border rounded-2xl p-4 flex flex-col md:flex-row md:items-center md:justify-between"
+              >
+                <div>
+                  <p className="font-bold">{order.customer || 'Walk-in Customer'}</p>
+                  <p className="text-sm text-gray-500">{order.date}</p>
+                </div>
+
+                <div>
+                  <p className="font-semibold">?{order.total.toLocaleString()}</p>
+                  <p className="text-sm">{order.payment}</p>
+                </div>
+
+                <div>
+                  <span className="px-4 py-2 rounded-full bg-gray-100 text-sm font-medium">
+                    {order.status}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+  }
+  const products = [
+    { id: 1, name: 'Starter Kit', price: 3500, stock: 12 },
+    { id: 2, name: '5mg Bundle', price: 5500, stock: 8 },
+    { id: 3, name: '10mg Bundle', price: 8500, stock: 5 },
+    { id: 4, name: 'Bac Water', price: 250, stock: 30 },
+  ];
+
+  const [cart, setCart] = React.useState([]);
+  const [customer, setCustomer] = React.useState('');
+  const [payment, setPayment] = React.useState('GCash');
+  const [darkMode, setDarkMode] = React.useState(false);
+  const [orders, setOrders] = React.useState([]);
+  const [search, setSearch] = React.useState('');
+
+  const addToCart = (product) => {
+    const existing = cart.find((item) => item.id === product.id);
+
+    if (existing) {
+      setCart(
+        cart.map((item) =>
+          item.id === product.id
+            ? { ...item, qty: item.qty + 1 }
+            : item
+        )
+      );
+    } else {
+      setCart([...cart, { ...product, qty: 1 }]);
+    }
+  };
+
+  const updateQty = (id, action) => {
+    setCart(
+      cart
+        .map((item) => {
+          if (item.id === id) {
+            const newQty = action === 'add' ? item.qty + 1 : item.qty - 1;
+            return { ...item, qty: newQty };
+          }
+          return item;
+        })
+        .filter((item) => item.qty > 0)
+    );
+  };
+
+  const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+
+  const completeOrder = () => {
+    if (cart.length === 0) return;
+
+    const newOrder = {
+      id: Date.now(),
+      customer,
+      payment,
+      items: cart,
+      total,
+      status: 'Processing',
+      date: new Date().toLocaleString(),
+    };
+
+    setOrders([newOrder, ...orders]);
+
+    alert('Order completed successfully!');
+
+    setCart([]);
+    setCustomer('');
+  };
+
+  const printReceipt = () => {
+    const receiptWindow = window.open('', '_blank');
+
+    receiptWindow.document.write(`
+      <html>
+        <head>
+          <title>Receipt</title>
+        </head>
+        <body style="font-family: Arial; padding: 20px;">
+          <h2>PepZii Receipt</h2>
+          <p>Customer: ${customer || 'Walk-in Customer'}</p>
+          <p>Payment: ${payment}</p>
+          <hr />
+          ${cart
+            .map(
+              (item) => `
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                  <span>${item.name} x ${item.qty}</span>
+                  <span>?${item.price * item.qty}</span>
+                </div>
+              `
+            )
+            .join('')}
+          <hr />
+          <h3>Total: ?${total.toLocaleString()}</h3>
+        </body>
+      </html>
+    `);
+
+    receiptWindow.document.close();
+    receiptWindow.print();
+  };
+
+  const exportExcel = () => {
+    const csvContent = [
+      ['Customer', 'Payment', 'Total', 'Status', 'Date'],
+      ...orders.map((order) => [
+        order.customer,
+        order.payment,
+        order.total,
+        order.status,
+        order.date,
+      ]),
+    ]
+      .map((e) => e.join(','))
+      .join('
+');
+
+    const blob = new Blob([csvContent], {
+      type: 'text/csv;charset=utf-8;',
+    });
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'pepzii_orders.csv';
+    link.click();
+  };
+
+  const filteredProducts = products.filter((product) =>
+    product.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className="p-6">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-white rounded-3xl shadow-lg p-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className="border px-4 py-2 rounded-2xl"
+            >
+              {darkMode ? 'Light Mode' : 'Dark Mode'}
+            </button>
+            <div>
+              <h1 className="text-3xl font-bold">PepZii POS System</h1>
+              <p className="text-gray-500 mt-1">
+                Online order and inventory management dashboard
+              </p>
+            </div>
+
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="border rounded-2xl px-4 py-3 w-full md:w-72"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredProducts.map((product) => (
+              <div
+                key={product.id}
+                className="border rounded-3xl p-5 hover:shadow-md transition bg-gray-50"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h2 className="text-xl font-semibold">{product.name}</h2>
+                    <p className="text-gray-500 text-sm mt-1">
+                      Stock: {product.stock}
+                    </p>
+                  </div>
+
+                  <div className="text-right">
+                    <p className="text-2xl font-bold">?{product.price}</p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => addToCart(product)}
+                  className="w-full bg-black text-white py-3 rounded-2xl font-medium hover:opacity-90"
+                >
+                  Add to Cart
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-3xl shadow-lg p-6 h-fit sticky top-6">
+          <h2 className="text-2xl font-bold mb-5">Order Summary</h2>
+
+          <div className="space-y-4 mb-6">
+            <input
+              type="text"
+              placeholder="Customer name"
+              value={customer}
+              onChange={(e) => setCustomer(e.target.value)}
+              className="w-full border rounded-2xl px-4 py-3"
+            />
+
+            <select
+              value={payment}
+              onChange={(e) => setPayment(e.target.value)}
+              className="w-full border rounded-2xl px-4 py-3"
+            >
+              <option>GCash</option>
+              <option>Maya</option>
+              <option>Bank Transfer</option>
+              <option>Cash on Delivery</option>
+            </select>
+          </div>
+
+          <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+            {cart.length === 0 ? (
+              <p className="text-gray-500">No items added yet.</p>
+            ) : (
+              cart.map((item) => (
+                <div
+                  key={item.id}
+                  className="border rounded-2xl p-4 flex justify-between items-center"
+                >
+                  <div>
+                    <p className="font-semibold">{item.name}</p>
+                    <p className="text-sm text-gray-500">
+                      ?{item.price} x {item.qty}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => updateQty(item.id, 'minus')}
+                      className="w-8 h-8 rounded-full border"
+                    >
+                      -
+                    </button>
+
+                    <span className="font-semibold">{item.qty}</span>
+
+                    <button
+                      onClick={() => updateQty(item.id, 'add')}
+                      className="w-8 h-8 rounded-full border"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="border-t mt-6 pt-6">
+            <div className="flex justify-between text-lg mb-2">
+              <span>Subtotal</span>
+              <span>?{total.toLocaleString()}</span>
+            </div>
+
+            <div className="flex justify-between text-2xl font-bold mb-6">
+              <span>Total</span>
+              <span>?{total.toLocaleString()}</span>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={completeOrder}
+                className="w-full bg-black text-white py-4 rounded-2xl text-lg font-semibold hover:opacity-90"
+              >
+                Complete Order
+              </button>
+
+              <button
+                onClick={printReceipt}
+                className="w-full border py-4 rounded-2xl text-lg font-semibold"
+              >
+                Print Receipt
+              </button>
+
+              <button
+                onClick={exportExcel}
+                className="w-full border py-4 rounded-2xl text-lg font-semibold"
+              >
+                Export Excel
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white rounded-3xl shadow-md p-5">
+          <p className="text-gray-500 text-sm">Today Sales</p>
+          <h3 className="text-3xl font-bold mt-2">?24,500</h3>
+        </div>
+
+        <div className="bg-white rounded-3xl shadow-md p-5">
+          <p className="text-gray-500 text-sm">Orders Today</p>
+          <h3 className="text-3xl font-bold mt-2">18</h3>
+        </div>
+
+        <div className="bg-white rounded-3xl shadow-md p-5">
+          <p className="text-gray-500 text-sm">Low Stock Alert</p>
+          <h3 className="text-3xl font-bold mt-2">2 Items</h3>
+        </div>
+      </div>
+    </div>
+  );
+}
